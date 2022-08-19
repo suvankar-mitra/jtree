@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Parameters: folders space separated
+# E.g. : ./jtree ./src ./target
+
 #########################################
 # Check if Java is installed
 #########################################
@@ -9,23 +12,26 @@ if [ "$java_v" == "" ]; then
   echo ">> Please consider installing Java Runtime to execute this program."
   echo ">> https://openjdk.org/install/"
   exit 1
-else
-  echo ">> Java is installed in your system!"
-  echo "$java_v"
 fi
-echo ""
+
+mvn_v=$(mvn -v)
+if [ "$mvn_v" == "" ]; then
+  echo ">> Maven is not installed in your system!"
+  echo ">> Please consider installing Maven to build and install this program."
+  echo ">> https://maven.apache.org/download.cgi"
+  exit 1
+fi
 
 #########################################
 # Create jar
 #########################################
-echo ">> Maven build"
-mvn clean package --file pom.xml
+ls ./target/jtree*-jar-with-dependencies.jar &> /dev/null
 
-echo ">> Jar created"
-ls ./target/jtree*-jar-with-dependencies.jar
+if [ "$?" -ne "0" ]; then
+  mvn clean package --file pom.xml &> /dev/null
+fi
 
 #########################################
 # Run
 #########################################
-echo ">> Run jtree [java -cp ./target/jtree*-jar-with-dependencies.jar com.suvmitra.jtree.MainKt ./]"
-java -cp ./target/jtree*-jar-with-dependencies.jar com.suvmitra.jtree.MainKt ./
+java -cp ./target/jtree*-jar-with-dependencies.jar com.suvmitra.jtree.MainKt "$@"
