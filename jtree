@@ -14,24 +14,16 @@ if [ "$java_v" == "" ]; then
   exit 1
 fi
 
-mvn_v=$(mvn -v)
-if [ "$mvn_v" == "" ]; then
-  echo ">> Maven is not installed in your system!"
-  echo ">> Please consider installing Maven to build and install this program."
-  echo ">> https://maven.apache.org/download.cgi"
-  exit 1
-fi
-
 #########################################
 # Create jar
 #########################################
 ls ./target/jtree*-jar-with-dependencies.jar &> /dev/null
 
 if [ "$?" -ne "0" ]; then
-  mvn clean package --file pom.xml &> /dev/null
+  ./mvnw clean package --file pom.xml &> /dev/null
 fi
 
 #########################################
 # Run
 #########################################
-java -cp ./target/jtree*-jar-with-dependencies.jar com.suvmitra.jtree.MainKt "$@"
+java -cp ./target/jtree*-jar-with-dependencies.jar com.suvmitra.jtree.JTreeKt "$@"
