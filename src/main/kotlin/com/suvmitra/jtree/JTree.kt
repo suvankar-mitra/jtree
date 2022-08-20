@@ -16,16 +16,16 @@ private const val ANSI_CYAN = "\u001B[36m"
 private const val ANSI_WHITE = "\u001B[37m"
 private const val SPACE = "    "
 
-private var numDir = -1
-private var numFile = 0
-private var numSymLink = 0
-
 fun main(args: Array<String>) {
 
     // by default hidden file/folder will not be visited
     val walkHidden = System.getProperty("show-hidden", false.toString()).toBoolean()
     // by default symbolic link will not be visited
     val walkSymLink = System.getProperty("follow-symlink", false.toString()).toBoolean()
+    // by default only directory visit will be false
+    val walkOnlyDir = System.getProperty("only-dir", false.toString()).toBoolean()
+    // by default walk till the leaf level
+    val walkTillLevel = System.getProperty("walk-level", Int.MAX_VALUE.toString()).toInt()
 
     if(args.isEmpty()) {
         println("Please provide at least one directory as argument!\n")
@@ -35,26 +35,29 @@ fun main(args: Array<String>) {
     val walkOptions = ArrayList<TreeOptions>()
     if(walkHidden) walkOptions.add(TreeOptions.WALK_HIDDEN)
     if(walkSymLink) walkOptions.add(TreeOptions.WALK_SYM_LINK)
+    if(walkOnlyDir) walkOptions.add(TreeOptions.WALK_ONLY_DIR)
 
     args.forEach {
-        numDir = -1
-        numFile = 0
-        numSymLink = 0
-
-        val m = Main()
-        m.traverseDir(it, *walkOptions.toTypedArray()) // traverse each directory
+        val m = JTree()
+        m.traverseDir(it, walkTillLevel, *walkOptions.toTypedArray()) // traverse each directory
         println(m.output)
         println(m.outputMeta)
     }
 }
 
-class Main {
+class JTree {
+
+    private var numDir = -1
+    private var numFile = 0
+    private var numSymLink = 0
 
     val output = StringBuilder()
     val outputMeta = StringBuilder()
+    private var walkTillLevel = Int.MAX_VALUE
 
-    fun traverseDir(dirName: String, vararg options: TreeOptions) {
+    fun traverseDir(dirName: String, walkTillLevel: Int = Int.MAX_VALUE, vararg options: TreeOptions) {
         val dirPath: Path = Path.of(dirName)
+        this.walkTillLevel = walkTillLevel
 
         // check if the path exists
         if (!Files.exists(dirPath)) {
@@ -69,7 +72,7 @@ class Main {
         }
 
         // walk the directory and print
-        fileWalk(dirPath, "", "", *options)
+        fileWalk(dirPath, "", "", 0, *options)
 
         // remove empty lines
         val tempOutput = StringBuilder()
@@ -81,19 +84,13 @@ class Main {
                 "$numSymLink ${if (numSymLink > 1) "symlinks" else "symlink"}")
     }
 
-    private fun fileWalk(path: Path, space: String, prefix: String, vararg options: TreeOptions) {
-        var walkHidden = false
-        var walkSymLink = false
+    private fun fileWalk(path: Path, space: String, prefix: String, level: Int, vararg options: TreeOptions) {
+        val walkHidden = options.contains(TreeOptions.WALK_HIDDEN)
+        val walkSymLink = options.contains(TreeOptions.WALK_SYM_LINK)
+        val walkOnlyDir = options.contains(TreeOptions.WALK_ONLY_DIR)
         val toPrint = StringBuilder()
 
-        options.forEach {
-            if (it == TreeOptions.WALK_HIDDEN) {
-                walkHidden = true
-            }
-            if (it == TreeOptions.WALK_SYM_LINK) {
-                walkSymLink = true
-            }
-        }
+        if(level > walkTillLevel) return
 
         // do not print hidden files/dir if the option is not provided
         // go ahead if it is the root
@@ -135,34 +132,34 @@ class Main {
             path.toFile().listFiles()?.sorted()?.forEach {
                 if (++k == path.toFile().listFiles()?.size)
                     if (prefix == "├──")
-                        fileWalk(it.toPath(), "$space│$SPACE", "└──", *options)
+                        fileWalk(it.toPath(), "$space│$SPACE", "└──", level+1, *options)
                     else
-                        fileWalk(it.toPath(), "$space$SPACE", "└──", *options)
+                        fileWalk(it.toPath(), "$space$SPACE", "└──", level+1, *options)
                 else
                     if (prefix == "├──")
-                        fileWalk(it.toPath(), "$space│$SPACE", "├──", *options)
+                        fileWalk(it.toPath(), "$space│$SPACE", "├──", level+1, *options)
                     else
-                        fileWalk(it.toPath(), "$space$SPACE", "├──", *options)
+                        fileWalk(it.toPath(), "$space$SPACE", "├──", level+1, *options)
             }
         } else {
+            if(walkOnlyDir)
+                return
             numFile++
-            if (Files.probeContentType(path) == null)
+            if(Files.probeContentType(path) == null)
                 toPrint.append(
                     "${
                         if (space.startsWith(SPACE)) space.substring(SPACE.length)
                         else space
                     }$prefix $ANSI_GREEN${path.fileName}$ANSI_RESET"
                 ).append("\n")
-            else if (Files.probeContentType(path) == "image/jpeg")
+            else if (Files.probeContentType(path).startsWith("image"))
                 toPrint.append(
                     "${
                         if (space.startsWith(SPACE)) space.substring(SPACE.length)
                         else space
                     }$prefix $ANSI_PURPLE${path.fileName}$ANSI_RESET"
                 ).append("\n")
-            else if (Files.probeContentType(path) == "application/java-archive"
-                || Files.probeContentType(path) == "application/gzip"
-            )
+            else if (Files.probeContentType(path).startsWith("application"))
                 toPrint.append(
                     "${
                         if (space.startsWith(SPACE)) space.substring(SPACE.length)
@@ -174,7 +171,7 @@ class Main {
                     "${
                         if (space.startsWith(SPACE)) space.substring(SPACE.length)
                         else space
-                    }$prefix $ANSI_YELLOW${path.fileName}$ANSI_RESET"
+                    }$prefix $ANSI_GREEN${path.fileName}$ANSI_RESET"
                 ).append("\n")
             output.append(toPrint)
         }

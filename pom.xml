@@ -60,7 +60,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.suvmitra.jtree.Main</mainClass>
+              <mainClass>com.suvmitra.jtree.JTree</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
