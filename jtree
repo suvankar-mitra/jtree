@@ -3,6 +3,80 @@
 # Parameters: folders space separated
 # E.g. : ./jtree ./src ./target
 
+help() {
+  echo "Usage: jtree [-asdB] [-l level] [-v] [-h] [directory...]
+
+Listing Options:
+----------------
+        [ -a | --show-hidden           Show all including hidden files and directories  ]
+        [ -s | --follow-symlink        Follow the symbolic link and generate tree ]
+        [ -d | --only-dir              Show only the directories ]
+        [ -l | --level                 Set the level of max depth ]
+        [ -B | --build                 Rebuild the project ]
+        [ -v | --version               Show the version info ]
+        [ -h | --help                  Show this little help menu ]"
+  exit 2
+}
+
+SHORT=a,s,d,l:,B,h,v
+LONG=show-hidden,follow-symlink,only-dir,level:,build,version,help
+OPTS=$(getopt -a -n jtree --options $SHORT --longoptions $LONG -- "$@")
+
+VALID_ARGUMENTS=$# # Returns the count of arguments that are in short or long options
+
+if [ "$VALID_ARGUMENTS" -eq 0 ]; then
+  help
+fi
+
+eval set -- "$OPTS"
+
+PARAMS="" # List of system properties passed to java
+_build=0 # flag to build the jar
+
+# Parse the parameters
+while :; do
+  case "$1" in
+  -a | --show-hidden)
+    PARAMS=$PARAMS" -Dshow-hidden=true "
+    shift
+    ;;
+  -s | --follow-symlink)
+    PARAMS=$PARAMS" -Dfollow-symlink=true "
+    shift
+    ;;
+  -d | --only-dir)
+    PARAMS=$PARAMS" -Donly-dir=true "
+    shift
+    ;;
+  -l | --level)
+      PARAMS=$PARAMS" -Dwalk-level=$2 "
+      shift 2
+      ;;
+  -h | --help)
+    help
+    ;;
+  -B | --build)
+    _build=1
+    shift
+    break
+    ;;
+  -v | --version)
+    ./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout
+    echo ""
+    exit
+    ;;
+  --)
+    shift
+    break
+    ;;
+  *)
+    echo "Unexpected option: $1"
+    help
+    ;;
+  esac
+done
+
+
 #########################################
 # Check if Java is installed
 #########################################
@@ -17,13 +91,13 @@ fi
 #########################################
 # Create jar
 #########################################
-ls ./target/jtree*-jar-with-dependencies.jar &> /dev/null
+ls ./target/jtree*-jar-with-dependencies.jar &>/dev/null
 
-if [ "$?" -ne "0" ]; then
-  ./mvnw clean package --file pom.xml &> /dev/null
+if [ "$?" -ne "0" ] || [ "$_build" -ne "0" ]; then
+  ./mvnw clean package --file pom.xml
 fi
 
 #########################################
 # Run
 #########################################
-java -cp ./target/jtree*-jar-with-dependencies.jar com.suvmitra.jtree.JTreeKt "$@"
+exec java -cp ./target/jtree*-jar-with-dependencies.jar $PARAMS com.suvmitra.jtree.JTreeKt $@ ;
