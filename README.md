@@ -3,6 +3,7 @@
 # jtree
 A Linux 'tree' command clone written in Kotlin / Java.
 
+![jtree-help](jtree-help.png)
 ![jtree-output](jtree-output.png)
 
 ## How to use it?
