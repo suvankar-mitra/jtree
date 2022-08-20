@@ -9,7 +9,7 @@ class JTreeTest {
     fun test1_all_file_and_dir() {
         val jTree = JTree()
         jTree.traverseDir("src/test")
-        val out = jTree.outputMeta
+        val out = jTree.treeOutputMeta
         assertEquals("4 directories, 1 file, 0 symlink", out.toString())
     }
 
@@ -17,7 +17,7 @@ class JTreeTest {
     fun test2_walk_till_level_1() {
         val jTree = JTree()
         jTree.traverseDir("src/test", 1)
-        val out = jTree.outputMeta
+        val out = jTree.treeOutputMeta
         assertEquals("1 directory, 0 file, 0 symlink", out.toString())
     }
 }

@@ -40,8 +40,8 @@ fun main(args: Array<String>) {
     args.forEach {
         val m = JTree()
         m.traverseDir(it, walkTillLevel, *walkOptions.toTypedArray()) // traverse each directory
-        println(m.output)
-        println(m.outputMeta)
+        println(m.treeOutput)
+        println(m.treeOutputMeta)
     }
 }
 
@@ -51,8 +51,10 @@ class JTree {
     private var numFile = 0
     private var numSymLink = 0
 
-    val output = StringBuilder()
-    val outputMeta = StringBuilder()
+    // output variables
+    val treeOutput = StringBuilder()
+    val treeOutputMeta = StringBuilder()
+
     private var walkTillLevel = Int.MAX_VALUE
 
     fun traverseDir(dirName: String, walkTillLevel: Int = Int.MAX_VALUE, vararg options: TreeOptions) {
@@ -76,11 +78,11 @@ class JTree {
 
         // remove empty lines
         val tempOutput = StringBuilder()
-        tempOutput.append(output)
-        output.clear()
-        output.append(tempOutput.replace(Regex.fromLiteral("(?m)^\\s+\$"),""))
+        tempOutput.append(treeOutput)
+        treeOutput.clear()
+        treeOutput.append(tempOutput.replace(Regex.fromLiteral("(?m)^\\s+\$"),""))
 
-        outputMeta.append("$numDir ${if (numDir > 1) "directories" else "directory"}, $numFile ${if (numFile > 1) "files" else "file"}, " +
+        treeOutputMeta.append("$numDir ${if (numDir > 1) "directories" else "directory"}, $numFile ${if (numFile > 1) "files" else "file"}, " +
                 "$numSymLink ${if (numSymLink > 1) "symlinks" else "symlink"}")
     }
 
@@ -105,7 +107,7 @@ class JTree {
                     toPrint.append("$ANSI_BLUE${path.toRealPath()}$ANSI_RESET").append("\n")
                 else
                     toPrint.append("$ANSI_GREEN${path.toRealPath()}$ANSI_RESET").append("\n")
-                output.append(toPrint)
+                treeOutput.append(toPrint)
                 return
             }
         }
@@ -126,7 +128,7 @@ class JTree {
                     }$ANSI_BLUE${if (prefix == "") path else path.fileName}$ANSI_RESET"
                 ).append("\n")
             }
-            output.append(toPrint)
+            treeOutput.append(toPrint)
 
             var k = 0
             path.toFile().listFiles()?.sorted()?.forEach {
@@ -173,7 +175,7 @@ class JTree {
                         else space
                     }$prefix $ANSI_GREEN${path.fileName}$ANSI_RESET"
                 ).append("\n")
-            output.append(toPrint)
+            treeOutput.append(toPrint)
         }
     }
 }
