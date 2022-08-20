@@ -41,7 +41,7 @@ fun main(args: Array<String>) {
         val m = JTree()
         m.traverseDir(it, walkTillLevel, *walkOptions.toTypedArray()) // traverse each directory
         println(m.treeOutput)
-        println(m.treeOutputMeta)
+        println("${m.treeOutputMeta} \n")
     }
 }
 
