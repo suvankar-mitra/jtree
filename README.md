@@ -32,7 +32,7 @@ class Demo {
 
 ```kotlin
 
-import javax.swing.JTree
+import com.suvmitra.jtree.JTree
 
 fun main() {
     val jTree = JTree
