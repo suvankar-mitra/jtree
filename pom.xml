@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.suvmitra</groupId>
   <artifactId>jtree</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.1-SNAPSHOT</version>
   <name>jtree</name>
   <url>http://maven.apache.org</url>
   <properties>
